@@ -11,26 +11,30 @@ fn findBitmapByName(name: []const u8) ?[8]u8 {
     return null;
 }
 
-pub fn draw(arena: *std.heap.ArenaAllocator, str: []const u8) []u8 {
-    var allocator = arena.allocator();
+pub fn draw(buffer: []u8, str: []const u8) []u8 {
     const char_width = 8;
     const empty_val: []u8 = &[0]u8{};
 
-    var merged: []u8 = allocator.alloc(u8, str.len * char_width) catch |err| {
-        std.log.scoped(.font).err("{any}", .{err});
-        return empty_val;
-    };
+    //var merged: []u8 = allocator.alloc(u8, str.len * char_width) catch |err| {
+    //    std.log.scoped(.font).err("{any}", .{err});
+    //    return empty_val;
+    //};
+    const needed_len = str.len * char_width;
+
+    if (buffer.len < needed_len) {
+        return empty_val; // Buffer too small
+    }
 
     for (str, 0..) |c, i| {
         const char: [1]u8 = [_]u8{c};
         const char_bitmap = findBitmapByName(&char) orelse Fonts.@" "; // Get the bitmap
         // std.debug.print("{any}\n", .{char_bitmap});
         for (0.., char_bitmap) |r, b| {
-            merged[(i * 8) + r] = b;
+            buffer[(i * 8) + r] = b;
         }
     }
 
-    return merged;
+    return buffer;
 }
 pub const Fonts = struct {
     pub const @"0": [8]u8 = .{
@@ -736,9 +740,8 @@ pub const Fonts = struct {
 };
 
 test "get bitmap" {
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-    defer arena.deinit();
-    const actual = draw(&arena, "Guney");
+    var buffer: [40]u8 = undefined;
+    const actual = draw(&buffer, "Guney");
     const expected = [_]u8{ 0, 126, 129, 137, 137, 73, 250, 0, 0, 127, 128, 128, 128, 128, 127, 0, 0, 255, 2, 4, 8, 16, 255, 0, 0, 255, 137, 137, 137, 137, 129, 0, 0, 3, 4, 248, 248, 4, 3, 0 };
     try std.testing.expectEqualSlices(u8, &expected, actual);
 }
