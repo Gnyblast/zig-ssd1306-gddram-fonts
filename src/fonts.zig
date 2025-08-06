@@ -14,10 +14,6 @@ fn findBitmapByName(name: []const u8) ?[8]u8 {
 pub fn draw(buffer: []u8, str: []const u8) []u8 {
     const char_width = 8;
 
-    //var merged: []u8 = allocator.alloc(u8, str.len * char_width) catch |err| {
-    //    std.log.scoped(.font).err("{any}", .{err});
-    //    return empty_val;
-    //};
     const needed_len = str.len * char_width;
 
     if (buffer.len < needed_len) {
@@ -751,10 +747,25 @@ test "get bitmap" {
     try std.testing.expectEqualSlices(u8, &expected, actual);
 }
 
+test "get bitmap insufficient buff" {
+    var buffer: [30]u8 = undefined;
+    const actual = draw(&buffer, "Guney");
+    try std.testing.expectEqualSlices(u8, &buffer, actual);
+}
+
 test "get bitmap allocated" {
     const allocator = std.testing.allocator;
     const actual = try drawAlloc(allocator, "Guney");
     defer allocator.free(actual);
+    const expected = [_]u8{ 0, 126, 129, 137, 137, 73, 250, 0, 0, 127, 128, 128, 128, 128, 127, 0, 0, 255, 2, 4, 8, 16, 255, 0, 0, 255, 137, 137, 137, 137, 129, 0, 0, 3, 4, 248, 248, 4, 3, 0 };
+    try std.testing.expectEqualSlices(u8, &expected, actual);
+}
+
+test "get bitmap arena alloc" {
+    const allocator = std.testing.allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const actual = try drawAlloc(arena.allocator(), "Guney");
     const expected = [_]u8{ 0, 126, 129, 137, 137, 73, 250, 0, 0, 127, 128, 128, 128, 128, 127, 0, 0, 255, 2, 4, 8, 16, 255, 0, 0, 255, 137, 137, 137, 137, 129, 0, 0, 3, 4, 248, 248, 4, 3, 0 };
     try std.testing.expectEqualSlices(u8, &expected, actual);
 }
