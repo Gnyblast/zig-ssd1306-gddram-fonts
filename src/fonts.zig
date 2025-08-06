@@ -13,7 +13,6 @@ fn findBitmapByName(name: []const u8) ?[8]u8 {
 
 pub fn draw(buffer: []u8, str: []const u8) []u8 {
     const char_width = 8;
-    const empty_val: []u8 = &[0]u8{};
 
     //var merged: []u8 = allocator.alloc(u8, str.len * char_width) catch |err| {
     //    std.log.scoped(.font).err("{any}", .{err});
@@ -22,7 +21,7 @@ pub fn draw(buffer: []u8, str: []const u8) []u8 {
     const needed_len = str.len * char_width;
 
     if (buffer.len < needed_len) {
-        return empty_val; // Buffer too small
+        return buffer; // Buffer too small
     }
 
     for (str, 0..) |c, i| {
@@ -36,6 +35,12 @@ pub fn draw(buffer: []u8, str: []const u8) []u8 {
 
     return buffer;
 }
+
+pub fn drawAlloc(allocator: std.mem.Allocator, str: []const u8) ![]u8 {
+    const buff: []u8 = try allocator.alloc(u8, str.len * 8);
+    return draw(buff, str);
+}
+
 pub const Fonts = struct {
     pub const @"0": [8]u8 = .{
         0b00000000,
@@ -742,6 +747,14 @@ pub const Fonts = struct {
 test "get bitmap" {
     var buffer: [40]u8 = undefined;
     const actual = draw(&buffer, "Guney");
+    const expected = [_]u8{ 0, 126, 129, 137, 137, 73, 250, 0, 0, 127, 128, 128, 128, 128, 127, 0, 0, 255, 2, 4, 8, 16, 255, 0, 0, 255, 137, 137, 137, 137, 129, 0, 0, 3, 4, 248, 248, 4, 3, 0 };
+    try std.testing.expectEqualSlices(u8, &expected, actual);
+}
+
+test "get bitmap allocated" {
+    const allocator = std.testing.allocator;
+    const actual = try drawAlloc(allocator, "Guney");
+    defer allocator.free(actual);
     const expected = [_]u8{ 0, 126, 129, 137, 137, 73, 250, 0, 0, 127, 128, 128, 128, 128, 127, 0, 0, 255, 2, 4, 8, 16, 255, 0, 0, 255, 137, 137, 137, 137, 129, 0, 0, 3, 4, 248, 248, 4, 3, 0 };
     try std.testing.expectEqualSlices(u8, &expected, actual);
 }
