@@ -31,7 +31,7 @@ firmware.add_app_import("font8x8", font8x8.module("font8x8"), .{})
 ### Import Fonts
 
 ```zig
-var font8x8 = @import("font8x8").Fonts;
+const font8x8 = @import("font8x8").Fonts;
 ```
 
 ### Draw to Buffer
